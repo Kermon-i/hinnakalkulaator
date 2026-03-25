@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hinnakalkulaator">
+<meta name="theme-color" content="#0D0D0F">
+<title>3D Printimise Hinnakalkulaator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0D0D0F;
+    --surface: #16161A;
+    --card: #1C1C22;
+    --border: #252530;
+    --accent: #00D4FF;
+    --accent-dim: rgba(0,212,255,0.09);
+    --accent-border: rgba(0,212,255,0.25);
+    --text: #E8E8F0;
+    --muted: #6B6B80;
+    --dim: #9999AA;
+    --success: #00FFB3;
+    --warning: #FFB800;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+  }
+
+  /* HEADER */
+  .header { margin: 16px 0 24px; }
+  .header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .header-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  /* SECTION */
+  .section { margin-bottom: 12px; }
+  .section-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    margin-left: 2px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* INPUT ROW */
+  .input-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .input-row + .input-row { border-top: 1px solid var(--border); }
+  .input-label {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 0 10px;
+    min-width: 110px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .input-wrap input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 8px 0;
+    width: 70px;
+    text-align: right;
+  }
+  .input-wrap input::placeholder { color: var(--muted); }
+  .unit {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: 6px;
+    min-width: 28px;
+  }
+
+  /* CHIPS */
+  .chip-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+  }
+  .chip {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .chip-text {
+    font-size: 13px;
+    color: var(--dim);
+    font-weight: 500;
+  }
+  .chip.active .chip-text { color: var(--accent); }
+  .chip-fee {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .chip.active .chip-fee { color: var(--accent); opacity: 0.7; }
+  .chip-mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+  /* RESULTS */
+  .results-card {
+    border-color: var(--accent-border);
+    background: var(--surface);
+  }
+  .result-main {
+    padding: 20px;
+    text-align: center;
+    background: var(--accent-dim);
+  }
+  .result-main-label {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 6px;
+  }
+  .result-main-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+  .result-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2px 16px;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+  }
+  .result-label { font-size: 14px; color: var(--dim); }
+  .result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .result-value.success { color: var(--success); }
+  .result-value.warning { color: var(--warning); }
+
+  .breakdown {
+    margin: 0 16px 8px;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  .breakdown-label, .breakdown-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="safe">
+
+  <div class="header">
+    <div class="header-sub">3D Printimise</div>
+    <div class="header-title">Hinnakalkulaator</div>
+  </div>
+
+  <!-- MATERJAL -->
+  <div class="section">
+    <div class="section-label">MATERJAL</div>
+    <div class="card">
+      <div class="input-row">
+        <span class="input-label">Filament kaal</span>
+        <div class="input-wrap">
+          <input type="number" id="kaal" placeholder="0" inputmode="decimal" oninput="calc()">
+          <span class="unit">g</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <span class="input-label">Filament hind</span>
+        <div class="input-wrap">
+          <input type="number" id="filHind" placeholder="0" inputmode="decimal" oninput="calc()">
+          <span class="unit">€/kg</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TÖÖ -->
+  <div class="section">
+    <div class="section-label">TÖÖ</div>
+    <div class="card">
+      <div class="input-row">
+        <span class="input-label">Printimisaeg</span>
+        <div class="input-wrap">
+          <input type="number" id="aeg" placeholder="0" inputmode="decimal" oninput="calc()">
+          <span class="unit">min</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <span class="input-label">Töötunni hind</span>
+        <div class="input-wrap">
+          <input type="number" id="tooHind" placeholder="0" inputmode="decimal" oninput="calc()">
+          <span class="unit">€/h</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARNIMINE -->
+  <div class="section">
+    <div class="section-label">TARNIMINE</div>
+    <div class="card">
+      <div class="input-row">
+        <span class="input-label">Pakend + post</span>
+        <div class="input-wrap">
+          <input type="number" id="pakend" placeholder="0" inputmode="decimal" oninput="calc()">
+          <span class="unit">€</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÜÜGIKANAL -->
+  <div class="section">
+    <div class="section-label">MÜÜGIKANAL</div>
+    <div class="card">
+      <div class="chip-row">
+        <div class="chip active" onclick="setKanal(0)" id="kanal-0">
+          <span class="chip-text">Otsemüük</span>
+        </div>
+        <div class="chip" onclick="setKanal(1)" id="kanal-1">
+          <span class="chip-text">Facebook</span>
+          <span class="chip-fee">5.0%</span>
+        </div>
+        <div class="chip" onclick="setKanal(2)" id="kanal-2">
+          <span class="chip-text">Etsy</span>
+          <span class="chip-fee">6.5%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARGINAAL -->
+  <div class="section">
+    <div class="section-label">MARGINAAL</div>
+    <div class="card">
+      <div class="chip-row">
+        <div class="chip active" onclick="setMarginaal(3)" id="m-3"><span class="chip-text chip-mono">3x</span></div>
+        <div class="chip" onclick="setMarginaal(4)" id="m-4"><span class="chip-text chip-mono">4x</span></div>
+        <div class="chip" onclick="setMarginaal(5)" id="m-5"><span class="chip-text chip-mono">5x</span></div>
+        <div class="chip" onclick="setMarginaal(6)" id="m-6"><span class="chip-text chip-mono">6x</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TULEMUSED -->
+  <div class="section">
+    <div class="section-label">TULEMUSED</div>
+    <div class="card results-card">
+      <div class="result-main">
+        <div class="result-main-label">Soovitav müügihind</div>
+        <div class="result-main-value" id="res-hind">—</div>
+      </div>
+      <div class="result-divider"></div>
+      <div class="result-row">
+        <span class="result-label">Omahind</span>
+        <span class="result-value" id="res-omahind">—</span>
+      </div>
+      <div class="breakdown" id="breakdown">
+        <div class="breakdown-row"><span class="breakdown-label">Materjal</span><span class="breakdown-value" id="b-materjal">—</span></div>
+        <div class="breakdown-row"><span class="breakdown-label">Tööaeg</span><span class="breakdown-value" id="b-tooaeg">—</span></div>
+        <div class="breakdown-row" id="b-pakend-row"><span class="breakdown-label">Pakend + post</span><span class="breakdown-value" id="b-pakend">—</span></div>
+      </div>
+      <div class="result-divider"></div>
+      <div class="result-row">
+        <span class="result-label">Kasum</span>
+        <span class="result-value success" id="res-kasum">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-label">Kasumi %</span>
+        <span class="result-value success" id="res-protsent">—</span>
+      </div>
+      <div id="komisjon-block" class="hidden">
+        <div class="result-divider"></div>
+        <div class="result-row">
+          <span class="result-label" id="komisjon-label">Komisjon</span>
+          <span class="result-value warning" id="res-komisjon">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const KANALID = [
+  { label: 'Otsemüük', fee: 0.0 },
+  { label: 'Facebook', fee: 0.05 },
+  { label: 'Etsy', fee: 0.065 },
+];
+
+let kanalIdx = 0;
+let marginaal = 3;
+
+function setKanal(i) {
+  kanalIdx = i;
+  document.querySelectorAll('[id^="kanal-"]').forEach((el, idx) => {
+    el.classList.toggle('active', idx === i);
+  });
+  calc();
+}
+
+function setMarginaal(m) {
+  marginaal = m;
+  [3,4,5,6].forEach(v => {
+    document.getElementById('m-' + v).classList.toggle('active', v === m);
+  });
+  calc();
+}
+
+function p(id) {
+  return parseFloat(document.getElementById(id).value.replace(',', '.')) || 0;
+}
+
+function fmt(n) {
+  return n.toLocaleString('et-EE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function calc() {
+  const materjal = (p('kaal') / 1000) * p('filHind');
+  const tooaeg = (p('aeg') / 60) * p('tooHind');
+  const pakend = p('pakend');
+  const omahind = materjal + tooaeg + pakend;
+
+  const kanal = KANALID[kanalIdx];
+  const fee = kanal.fee;
+  const hasInput = omahind > 0;
+
+  const brutohind = fee < 1 ? (omahind * marginaal) / (1 - fee) : 0;
+  const kasum = brutohind * (1 - fee) - omahind;
+  const kasumiProt = brutohind > 0 ? (kasum / brutohind) * 100 : 0;
+
+  document.getElementById('res-hind').textContent = hasInput ? fmt(brutohind) : '—';
+  document.getElementById('res-omahind').textContent = hasInput ? fmt(omahind) : '—';
+  document.getElementById('res-kasum').textContent = hasInput ? fmt(kasum) : '—';
+  document.getElementById('res-protsent').textContent = hasInput ? kasumiProt.toFixed(1) + ' %' : '—';
+
+  document.getElementById('b-materjal').textContent = hasInput ? fmt(materjal) : '—';
+  document.getElementById('b-tooaeg').textContent = hasInput ? fmt(tooaeg) : '—';
+  document.getElementById('b-pakend').textContent = hasInput ? fmt(pakend) : '—';
+  document.getElementById('b-pakend-row').style.display = pakend > 0 ? 'flex' : 'none';
+  document.getElementById('breakdown').style.display = hasInput ? 'flex' : 'none';
+
+  const komisjonBlock = document.getElementById('komisjon-block');
+  if (fee > 0 && hasInput) {
+    komisjonBlock.classList.remove('hidden');
+    document.getElementById('komisjon-label').textContent = kanal.label + ' komisjon';
+    document.getElementById('res-komisjon').textContent = '-' + fmt(brutohind * fee);
+  } else {
+    komisjonBlock.classList.add('hidden');
+  }
+}
+
+calc();
+</script>
+</body>
+</html>
